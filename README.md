@@ -1,15 +1,13 @@
 # coop.symbiotic.memberid
 
-![Screenshot](/images/screenshot.png)
-
-(*FIXME: In one or two paragraphs, describe what the extension does and why one would download it. *)
+Simple extension to have a sequential Member ID in any contact that has a membership.
 
 The extension is licensed under [AGPL-3.0](LICENSE.txt).
 
 ## Requirements
 
 * PHP v5.4+
-* CiviCRM (*FIXME: Version number*)
+* CiviCRM 4.7
 
 ## Installation (Web UI)
 
@@ -37,8 +35,19 @@ cv en memberid
 
 ## Usage
 
-(* FIXME: Where would a new user navigate to get started? What changes would they see? *)
+* create a new custom field in the custom group you want. The custom field should be numeric and read only
+* get the id of this field and init the configuration using the api :
+
+```php
+$result = civicrm_api3('Setting', 'create', array(
+  'sequential' => 1,
+  'memberid_custom_field_id' => 26,
+));
+```
 
 ## Known Issues
 
-(* FIXME *)
+* there is no verification of the custom field type
+* there is no verification yet of unicity of the member ID (if the field is not read only, nothing prevent from having several members with the same ID)
+* there is no admininistration UI to define which custom field the extension must use (the api is the way to go)
+
