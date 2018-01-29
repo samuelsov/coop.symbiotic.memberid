@@ -142,22 +142,31 @@ function memberid_civicrm_post($op, $objectName, $objectId, &$objectRef) {
 }
 
 
-/**
- * Add a sequential nember id on the contact if none is defined
- * Will use a custom field to store the value (defined using civicrm api 'Setting')
- */
-function _update_member_id($membershipID, $contactID) {
+function get_memberid_customfield_id() {
   // get custom field id
   $result = civicrm_api3('Setting', 'get', array(
     'sequential' => 1,
     'return' => array("memberid_custom_field_id"),
   ));
 
-  if (empty($result['values'][0]['memberid_custom_field_id'])
-    || !ctype_digit($result['values'][0]['memberid_custom_field_id'])) {
+  if (!empty($result['values'][0]['memberid_custom_field_id']) &&
+    ctype_digit($result['values'][0]['memberid_custom_field_id'])) {
+    return (int)$result['values'][0]['memberid_custom_field_id'];
+  }
+}
+
+
+/**
+ * Add a sequential nember id on the contact if none is defined
+ * Will use a custom field to store the value (defined using civicrm api 'Setting')
+ */
+function _update_member_id($membershipID, $contactID) {
+
+  $fieldId = get_memberid_customfield_id();
+  if (empty($fieldId)) {
     return;
   }
-  $fieldName = "custom_" . (int)$result['values'][0]['memberid_custom_field_id'];
+  $fieldName = "custom_" . $fieldId;
 
   $results = civicrm_api3('Contact', 'get', array('sequential' => 1, 'return' => $fieldName, 'contact_id' => $contactID));
 
