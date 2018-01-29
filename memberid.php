@@ -123,30 +123,59 @@ function memberid_civicrm_alterSettingsFolders(&$metaDataFolders = NULL) {
   _memberid_civix_civicrm_alterSettingsFolders($metaDataFolders);
 }
 
-// --- Functions below this ship commented out. Uncomment as required. ---
 
 /**
- * Implements hook_civicrm_preProcess().
+ * Implements hook_civicrm_post().
  *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_preProcess
+ * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_post
  *
-function memberid_civicrm_preProcess($formName, &$form) {
+ */
+function memberid_civicrm_post($op, $objectName, $objectId, &$objectRef) {
 
-} // */
+  if (($objectName == 'Membership') && ($op == 'create' || $op == 'edit')) {
 
-/**
- * Implements hook_civicrm_navigationMenu().
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_navigationMenu
- *
-function memberid_civicrm_navigationMenu(&$menu) {
-  _memberid_civix_insert_navigation_menu($menu, NULL, array(
-    'label' => E::ts('The Page'),
-    'name' => 'the_page',
-    'url' => 'civicrm/the-page',
-    'permission' => 'access CiviReport,access CiviContribute',
-    'operator' => 'OR',
-    'separator' => 0,
+    // automatically set the member number to the entity id (imported member will not have the same entity id and member id)
+    _update_member_id($objectId, $objectRef->contact_id);
+
+  }
+
+}
+
+function _update_member_id($membershipID, $contactID) {
+  // get custom field id
+  $result = civicrm_api3('Setting', 'get', array(
+    'sequential' => 1,
+    'return' => array("memberid_custom_field_id"),
   ));
-  _memberid_civix_navigationMenu($menu);
-} // */
+
+  if (empty($result['values'][0]['memberid_custom_field_id'])
+    || !ctype_digit($result['values'][0]['memberid_custom_field_id'])) {
+    return;
+  }
+  $fieldName = "custom_" . (int)$result['values'][0]['memberid_custom_field_id'];
+
+  $results = civicrm_api3('Contact', 'get', array('sequential' => 1, 'return' => $fieldName, 'contact_id' => $contactID));
+
+  // value may not be created or be empty. i.e. delete the value in the interface to reset the field.
+  if (empty($results['values'][0][$fieldName])) {
+
+
+    // get latest member id (or could be saved in setting ?)
+    $result = civicrm_api3('Contact', 'get', array(
+      'sequential' => 1,
+      'return' => $fieldName,
+      'options' => array('sort' => "$fieldName desc", 'limit' => 1),
+    ));
+
+    $newID = 1;
+    if (!empty($result['values'][0][$fieldName])) {
+      $newID = ((int) $result['values'][0][$fieldName]) + 1;
+    }
+
+    // set the ID
+    civicrm_api3("Contact", "create", array('id' => $contactID, $fieldName => $newID));
+
+  }
+
+}
+
