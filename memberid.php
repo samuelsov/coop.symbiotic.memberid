@@ -134,13 +134,18 @@ function memberid_civicrm_post($op, $objectName, $objectId, &$objectRef) {
 
   if (($objectName == 'Membership') && ($op == 'create' || $op == 'edit')) {
 
-    // automatically set the member number to the entity id (imported member will not have the same entity id and member id)
+    // automatically add a sequential nember id if none is defined
     _update_member_id($objectId, $objectRef->contact_id);
 
   }
 
 }
 
+
+/**
+ * Add a sequential nember id on the contact if none is defined
+ * Will use a custom field to store the value (defined using civicrm api 'Setting')
+ */
 function _update_member_id($membershipID, $contactID) {
   // get custom field id
   $result = civicrm_api3('Setting', 'get', array(
