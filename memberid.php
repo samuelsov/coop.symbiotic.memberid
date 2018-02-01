@@ -142,6 +142,28 @@ function memberid_civicrm_post($op, $objectName, $objectId, &$objectRef) {
 }
 
 
+
+/**
+ * Implements hook_civicrm_apiWrappers().
+ *
+ * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_post
+ *
+ */
+function memberid_civicrm_apiWrappers(&$wrappers, $apiRequest) {
+  if ($apiRequest['entity'] == 'Contact' && $apiRequest['action'] == 'getquick') {
+    if (is_numeric($apiRequest['params']['name'])) {
+      $wrappers[] = new CRM_Memberid_APIWrapper();
+    }
+  }
+}
+
+
+
+
+
+
+/** HELPER **/
+
 function get_memberid_customfield_id() {
   // get custom field id
   $result = civicrm_api3('Setting', 'get', array(
@@ -193,3 +215,28 @@ function _update_member_id($membershipID, $contactID) {
 
 }
 
+// For quicksearch, to reformat the output
+function emulate_civicrm_api3_contact_getList($params) {
+
+  // not loaded by default
+  include_once "api/v3/Generic/Getlist.php";
+  include_once "api/v3/utils.php";
+
+  $apiRequest = array(
+    'entity' => 'Contact',
+    'action' => 'getlist',
+    'params' => $params,
+  );
+  $res = civicrm_api3_generic_getList($apiRequest);
+
+  $cfid = get_memberid_customfield_id();
+  if (empty($cfid)) return;
+  $field = 'custom_' . $cfid;
+
+  // reformat the output to look like getquick
+  foreach ($res['values'] as $idx => $value) {
+    $res['values'][$idx]['data'] = $value['extra']['sort_name'] . " ({$value['extra'][$field]})";
+  }
+
+  return $res;
+}
