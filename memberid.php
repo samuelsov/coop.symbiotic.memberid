@@ -150,7 +150,7 @@ function memberid_civicrm_post($op, $objectName, $objectId, &$objectRef) {
  *
  */
 function memberid_civicrm_apiWrappers(&$wrappers, $apiRequest) {
-  if ($apiRequest['entity'] == 'Contact' && $apiRequest['action'] == 'getquick') {
+  if ($apiRequest['entity'] == 'Contact' && $apiRequest['action'] == 'getquick' && empty($apiRequest['params']['field_name'])) {
     if (is_numeric($apiRequest['params']['name'])) {
       $wrappers[] = new CRM_Memberid_APIWrapper();
     }
