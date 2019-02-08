@@ -195,18 +195,19 @@ function _update_member_id($membershipID, $contactID) {
   // value may not be created or be empty. i.e. delete the value in the interface to reset the field.
   if (empty($results['values'][0][$fieldName])) {
 
-
-    // get latest member id (or could be saved in setting ?)
-    $result = civicrm_api3('Contact', 'get', array(
+    // get latest member id using a setting (to avoid problem with deleted contact)
+    $result = civicrm_api3('Setting', 'get', [
       'sequential' => 1,
-      'return' => $fieldName,
-      'options' => array('sort' => "$fieldName desc", 'limit' => 1),
-    ));
+      'return' => ["memberid_latest"],
+    ]);
 
     $newID = 1;
-    if (!empty($result['values'][0][$fieldName])) {
-      $newID = ((int) $result['values'][0][$fieldName]) + 1;
+    if (!empty($result['values'][0]['memberid_latest'])) {
+      $newID = ((int) $result['values'][0]['memberid_latest']) + 1;
     }
+
+    // update latest (before updating contact -> better have hole in numerotation than duplicate)
+    civicrm_api3('Setting', 'create', ['memberid_latest' => $newID]);
 
     // set the ID
     civicrm_api3("Contact", "create", array('id' => $contactID, $fieldName => $newID));
