@@ -146,11 +146,11 @@ function memberid_civicrm_post($op, $objectName, $objectId, &$objectRef) {
 /**
  * Implements hook_civicrm_apiWrappers().
  *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_post
+ * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_apiWrappers/
  *
  */
 function memberid_civicrm_apiWrappers(&$wrappers, $apiRequest) {
-  if ($apiRequest['entity'] == 'Contact' && $apiRequest['action'] == 'getquick' && empty($apiRequest['params']['field_name'])) {
+  if ($apiRequest['entity'] == 'Contact' && $apiRequest['action'] == 'getquick' && $apiRequest['params']['field_name'] == 'sort_name') {
     if (is_numeric($apiRequest['params']['name'])) {
       $wrappers[] = new CRM_Memberid_APIWrapper();
     }
